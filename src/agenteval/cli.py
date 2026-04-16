@@ -88,7 +88,7 @@ def init(
         raise typer.Exit(0)
 
     # Extract tasks
-    extractor = TaskExtractor(token=github_token, repo=repo_name)
+    extractor = TaskExtractor(token=github_token, repo=repo_name, base_url=github_base_url)
     tasks = extractor.extract_tasks(prs, output_path)
 
     # Prompt cleanup

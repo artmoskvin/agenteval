@@ -23,9 +23,17 @@ def _slugify(text: str, max_len: int = 60) -> str:
 class TaskExtractor:
     """Extracts eval task definitions from PR data."""
 
-    def __init__(self, token: str | None = None, repo: str = ""):
-        self.github = Github(token) if token else Github()
+    def __init__(self, token: str | None = None, repo: str = "", base_url: str | None = None):
+        kwargs = {"retry": 0}
+        if token:
+            kwargs["login_or_token"] = token
+        if base_url:
+            kwargs["base_url"] = base_url
+        self.github = Github(**kwargs)
         self.repo = repo
+        self.token = token
+        # API base for REST calls (e.g. https://ghe.spotify.net/api/v3)
+        self.api_base = base_url or "https://api.github.com"
 
     def extract_tasks(
         self, prs: list[PRData], output_dir: Path,
@@ -74,14 +82,12 @@ class TaskExtractor:
             gh_repo = self.github.get_repo(self.repo)
             pr = gh_repo.get_pull(pr_number)
             # Get diff by requesting files and reconstructing, or use the diff URL
+            headers = {"Accept": "application/vnd.github.v3.diff"}
+            if self.token:
+                headers["Authorization"] = f"token {self.token}"
             resp = requests.get(
-                f"https://api.github.com/repos/{self.repo}/pulls/{pr_number}",
-                headers={
-                    "Accept": "application/vnd.github.v3.diff",
-                    "Authorization": f"token {self.github._Github__requester._Requester__auth.token}"
-                    if self.github._Github__requester._Requester__auth
-                    else "",
-                },
+                f"{self.api_base}/repos/{self.repo}/pulls/{pr_number}",
+                headers=headers,
                 timeout=30,
             )
             if resp.status_code == 200:
