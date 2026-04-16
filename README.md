@@ -2,14 +2,6 @@
 
 Turn git history into eval suites for coding agents.
 
-## The Problem
-
-Everyone's building coding agents, but how do you know if yours is any good? Existing benchmarks (SWE-bench, HumanEval) test generic skills. What you actually want to know is: **can this agent do the work _your_ team does, on _your_ codebase?**
-
-## The Insight
-
-Your git history is already full of real coding tasks — every merged PR is a problem (the description) paired with a verified solution (the diff). **agenteval** extracts these into eval suites, runs agents against them, and scores the results.
-
 ## Quick Start
 
 ```bash
