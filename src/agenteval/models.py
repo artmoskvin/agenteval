@@ -32,3 +32,29 @@ class TaskSuite(BaseModel):
     created_at: datetime = Field(default_factory=datetime.now)
     repo_url: str
     tasks: list[TaskDefinition] = Field(default_factory=list)
+
+
+class RunResult(BaseModel):
+    task_id: str
+    agent: str
+    actual_diff: str = ""
+    stdout: str = ""
+    stderr: str = ""
+    exit_code: int = -1
+    duration_seconds: float = 0.0
+    started_at: datetime = Field(default_factory=datetime.now)
+    completed_at: datetime = Field(default_factory=datetime.now)
+    success: bool = False
+
+
+class ScoreResult(BaseModel):
+    task_id: str
+    agent: str
+    tests_pass: bool | None = None
+    test_output: str = ""
+    lint_clean: bool | None = None
+    lint_output: str = ""
+    diff_similarity: float = 0.0
+    llm_judge_score: int | None = None
+    llm_judge_explanation: str = ""
+    overall_score: float = 0.0
