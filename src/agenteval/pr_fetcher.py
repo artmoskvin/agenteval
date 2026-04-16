@@ -19,12 +19,12 @@ class PRFetcher:
     """Fetches merged PRs from a GitHub repository."""
 
     def __init__(self, token: str | None = None, base_url: str | None = None):
+        kwargs = {"retry": 0}  # disable PyGithub's insane retry backoff
+        if token:
+            kwargs["login_or_token"] = token
         if base_url:
-            self.github = Github(token, base_url=base_url)
-        elif token:
-            self.github = Github(token)
-        else:
-            self.github = Github()
+            kwargs["base_url"] = base_url
+        self.github = Github(**kwargs)
 
     @staticmethod
     def detect_github_base_url(repo_path: str = ".") -> str | None:
@@ -69,7 +69,21 @@ class PRFetcher:
         self, repo: str, since: date, until: date | None = None,
     ) -> list[PRData]:
         """Fetch merged PRs in the given date range, filtered for eval quality."""
-        gh_repo = self.github.get_repo(repo)
+        from github import GithubException
+
+        try:
+            gh_repo = self.github.get_repo(repo)
+        except GithubException as e:
+            if e.status == 403:
+                console.print("[red]Error:[/red] GitHub API returned 403 Forbidden. Is your GITHUB_TOKEN set and valid?")
+                raise SystemExit(1)
+            elif e.status == 401:
+                console.print("[red]Error:[/red] GitHub API returned 401 Unauthorized. Check your GITHUB_TOKEN.")
+                raise SystemExit(1)
+            elif e.status == 404:
+                console.print(f"[red]Error:[/red] Repository '{repo}' not found. Check the repo name and your token permissions.")
+                raise SystemExit(1)
+            raise
         until_date = until or date.today()
 
         since_dt = datetime(since.year, since.month, since.day, tzinfo=timezone.utc)
