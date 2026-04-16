@@ -13,7 +13,13 @@ Your git history is already full of real coding tasks — every merged PR is a p
 ## Quick Start
 
 ```bash
-# Install
+# Install (using uv)
+uv tool install .
+
+# Or run without installing
+uvx --from . agenteval <command>
+
+# Or install with pip
 pip install -e .
 
 # 1. Extract tasks from your repo's PR history
@@ -144,15 +150,27 @@ Weights are normalized — if a dimension is unavailable (e.g., no tests detecte
 ## Development
 
 ```bash
-# Clone and install
+# Clone and install (using uv)
+git clone https://github.com/artmoskvin/agenteval.git
+cd agenteval
+uv sync --all-extras
+
+# Run tests
+uv run pytest tests/ -v
+```
+
+<details>
+<summary>Using pip instead</summary>
+
+```bash
 git clone https://github.com/artmoskvin/agenteval.git
 cd agenteval
 python -m venv .venv && source .venv/bin/activate
 pip install -e ".[dev]"
-
-# Run tests
 python -m pytest tests/ -v
 ```
+
+</details>
 
 ## License
 
