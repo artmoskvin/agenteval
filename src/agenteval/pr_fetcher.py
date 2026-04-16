@@ -18,8 +18,38 @@ EXCLUDE_TITLE_PATTERNS = re.compile(r"\b(bump|deps|chore|merge)\b", re.IGNORECAS
 class PRFetcher:
     """Fetches merged PRs from a GitHub repository."""
 
-    def __init__(self, token: str | None = None):
-        self.github = Github(token) if token else Github()
+    def __init__(self, token: str | None = None, base_url: str | None = None):
+        if base_url:
+            self.github = Github(token, base_url=base_url)
+        elif token:
+            self.github = Github(token)
+        else:
+            self.github = Github()
+
+    @staticmethod
+    def detect_github_base_url(repo_path: str = ".") -> str | None:
+        """Detect GHE base URL from git remote. Returns None for github.com."""
+        try:
+            result = subprocess.run(
+                ["git", "-C", repo_path, "remote", "get-url", "origin"],
+                capture_output=True, text=True, check=True,
+            )
+            url = result.stdout.strip()
+            # SSH: git@host:owner/repo.git
+            m = re.match(r"git@([^:]+):", url)
+            if m:
+                host = m.group(1)
+                if host != "github.com":
+                    return f"https://{host}/api/v3"
+            # HTTPS: https://host/owner/repo.git
+            m = re.match(r"https?://([^/]+)/", url)
+            if m:
+                host = m.group(1)
+                if host != "github.com":
+                    return f"https://{host}/api/v3"
+        except subprocess.CalledProcessError:
+            pass
+        return None
 
     @staticmethod
     def get_repo_from_remote(repo_path: str = ".") -> str:
@@ -29,8 +59,8 @@ class PRFetcher:
             capture_output=True, text=True, check=True,
         )
         url = result.stdout.strip()
-        # Handle SSH (git@github.com:owner/repo.git) and HTTPS
-        m = re.search(r"github\.com[:/](.+?)(?:\.git)?$", url)
+        # Handle SSH (git@host:owner/repo.git) and HTTPS (https://host/owner/repo.git)
+        m = re.search(r"[:/]([^/]+/[^/]+?)(?:\.git)?$", url)
         if not m:
             raise ValueError(f"Cannot extract owner/repo from remote URL: {url}")
         return m.group(1)

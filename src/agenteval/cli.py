@@ -32,7 +32,8 @@ def init(
     from agenteval.prompt_cleanup import PromptCleaner
     from agenteval.task_extractor import TaskExtractor
 
-    # Determine repo name
+    # Determine repo name and detect GHE
+    github_base_url = None
     if "/" in repo and not Path(repo).exists():
         repo_name = repo
     else:
@@ -41,6 +42,7 @@ def init(
             console.print(f"[red]Error:[/red] {repo_path} is not a git repository")
             raise typer.Exit(1)
         try:
+            github_base_url = PRFetcher.detect_github_base_url(str(repo_path))
             repo_name = PRFetcher.get_repo_from_remote(str(repo_path))
         except Exception as e:
             console.print(f"[red]Error extracting repo from remote:[/red] {e}")
@@ -76,7 +78,9 @@ def init(
     ))
 
     # Fetch PRs
-    fetcher = PRFetcher(token=github_token)
+    if github_base_url:
+        console.print(f"[dim]Detected GitHub Enterprise: {github_base_url}[/dim]")
+    fetcher = PRFetcher(token=github_token, base_url=github_base_url)
     prs = fetcher.fetch_prs(repo_name, since_date, until_date)
 
     if not prs:
