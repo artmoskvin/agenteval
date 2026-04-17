@@ -5,14 +5,10 @@ Turn git history into eval suites for coding agents.
 ## Quick Start
 
 ```bash
-# Install (using uv)
-uv tool install .
-
-# Or run without installing
-uvx --from . agenteval <command>
-
-# Or install with pip
-pip install -e .
+# Build
+git clone https://github.com/artmoskvin/agenteval.git
+cd agenteval
+go build -o agenteval ./cmd/agenteval/
 
 # 1. Extract tasks from your repo's PR history
 agenteval init --repo owner/repo --since 2024-01-01
@@ -44,6 +40,8 @@ agenteval init --repo owner/repo --since 2024-01-01
 | `--no-llm` | `false` | Skip LLM-based prompt cleanup |
 
 PRs are filtered for eval quality: excludes bots, dependency bumps, chore PRs, large diffs (≥500 lines or ≥10 files), and PRs without descriptions.
+
+GitHub Enterprise is detected automatically from the local git remote — no extra configuration needed.
 
 ### `agenteval run`
 
@@ -142,27 +140,14 @@ Weights are normalized — if a dimension is unavailable (e.g., no tests detecte
 ## Development
 
 ```bash
-# Clone and install (using uv)
 git clone https://github.com/artmoskvin/agenteval.git
 cd agenteval
-uv sync --all-extras
+go mod tidy
+go build ./cmd/agenteval/
 
 # Run tests
-uv run pytest tests/ -v
+go test ./...
 ```
-
-<details>
-<summary>Using pip instead</summary>
-
-```bash
-git clone https://github.com/artmoskvin/agenteval.git
-cd agenteval
-python -m venv .venv && source .venv/bin/activate
-pip install -e ".[dev]"
-python -m pytest tests/ -v
-```
-
-</details>
 
 ## License
 
